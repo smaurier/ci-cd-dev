@@ -19,7 +19,7 @@ jobs:
   test:
     strategy:
       matrix:
-        node-version: [18, 20, 22]
+        node-version: [20, 22]  # Node 18 EOL depuis avril 2024
         os: [ubuntu-latest, windows-latest]
     runs-on: ${{ matrix.os }}
     steps:
@@ -31,18 +31,18 @@ jobs:
       - run: npm test
 ```
 
-Ce job s'exécute **6 fois** (3 versions × 2 OS).
+Ce job s'exécute **4 fois** (2 versions × 2 OS).
 
 ### Include et Exclude
 
 ```yaml
 strategy:
   matrix:
-    node: [18, 20, 22]
+    node: [20, 22]
     os: [ubuntu-latest, windows-latest]
     exclude:
-      - node: 18
-        os: windows-latest  # Node 18 non testé sur Windows
+      - node: 20
+        os: windows-latest  # Node 20 non testé sur Windows (optionnel)
     include:
       - node: 22
         os: macos-latest    # Test supplémentaire Node 22 sur macOS
