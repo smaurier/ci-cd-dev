@@ -43,7 +43,7 @@ jobs:
   test:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - run: npm ci
       - run: npm test          # ← passe-t-il ? gate-t-il ? où est Postgres ? où est la couverture ?
 ```
@@ -61,8 +61,8 @@ Une étape `run:` échoue si la commande renvoie un **code de sortie ≠ 0**. Un
 
 ```yaml
 steps:
-  - uses: actions/checkout@v4
-  - uses: actions/setup-node@v4
+  - uses: actions/checkout@v7
+  - uses: actions/setup-node@v6
     with:
       node-version: 22
       cache: npm
@@ -124,8 +124,8 @@ jobs:
         shard: [1, 2, 3, 4]
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v6
         with: { node-version: 22, cache: npm }
       - run: npm ci
       - run: npx playwright install --with-deps
@@ -161,8 +161,8 @@ jobs:
           --health-timeout 5s
           --health-retries 5
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v6
         with: { node-version: 22, cache: npm }
       - run: npm ci
       - run: npm run test:integration
@@ -206,7 +206,7 @@ Un job rouge dit *qu'il* a échoué, pas *quoi*. Trois niveaux pour rendre l'éc
 
 ```yaml
 - run: npm run test:unit -- --coverage --reporter=junit --outputFile=reports/junit.xml
-- uses: actions/upload-artifact@v4
+- uses: actions/upload-artifact@v7
   if: always()               # ← upload MÊME si l'étape de test a échoué
   with:
     name: test-report-unit   # depuis v4, un artefact est IMMUABLE : un même nom ne peut être ré-uploadé
@@ -219,21 +219,21 @@ Un job rouge dit *qu'il* a échoué, pas *quoi*. Trois niveaux pour rendre l'éc
 
 ```yaml
 # dans le job shardé :
-- uses: actions/upload-artifact@v4
+- uses: actions/upload-artifact@v7
   if: always()
   with:
     name: report-${{ matrix.shard }}   # nom unique par shard
     path: reports/
 
 # dans un job d'agrégation (needs: e2e) :
-- uses: actions/download-artifact@v4
+- uses: actions/download-artifact@v8
   with:
     pattern: report-*                  # récupère tous les shards
     merge-multiple: true               # les fusionne dans un seul dossier
     path: all-reports
 ```
 
-*(Les majors récents d'`upload-artifact` vont jusqu'à v7 ; `@v4` reste largement déployé et introduit l'immutabilité — c'est la version de référence de ce cours.)*
+*(`upload-artifact@v7` est la majeure courante ; l'immutabilité des artefacts est introduite depuis `@v4`.)*
 
 **Job summary — un résumé Markdown dans l'onglet run.** Écrire dans le fichier pointé par `$GITHUB_STEP_SUMMARY` affiche du Markdown directement sur la page du run, sans télécharger d'artefact.
 
@@ -263,10 +263,10 @@ jobs:
   unit:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       # setup-node avec cache npm : le lockfile hashé sert de clé de cache (module 02)
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v6
         with:
           node-version: 22
           cache: npm
@@ -281,7 +281,7 @@ jobs:
       # if: always() → on garde le rapport même quand les tests plantent (le moment où il sert).
       - name: Publier le rapport
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: coverage-unit
           path: coverage/
@@ -319,8 +319,8 @@ jobs:
           --health-timeout 5s
           --health-retries 5           # GitHub attend que la base soit prête avant les steps
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v6
         with: { node-version: 22, cache: npm }
       - run: npm ci
 
@@ -384,11 +384,11 @@ Le retry est légitime **temporairement** (le temps de corriger) ou pour une fla
 
 ```yaml
 # ❌ chaque shard tente d'uploader `test-report` → le 2e échoue (artefact immuable en v4)
-- uses: actions/upload-artifact@v4
+- uses: actions/upload-artifact@v7
   with: { name: test-report, path: reports/ }
 
 # ✅ nom unique par shard, fusion au download
-- uses: actions/upload-artifact@v4
+- uses: actions/upload-artifact@v7
   with: { name: report-${{ matrix.shard }}, path: reports/ }
 ```
 

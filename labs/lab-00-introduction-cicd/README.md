@@ -115,6 +115,27 @@ Justification : la couverture de tests de TribuZen n'est pas encore assez mûre 
 
 **Pourquoi la CI d'abord :** c'est le maillon avec le meilleur rapport valeur/effort. Sans elle, automatiser le déploiement ne ferait que **livrer plus vite des bugs non testés**. On sécurise l'intégration avant d'accélérer la livraison.
 
+**Grille d'auto-évaluation (coche — seuil de réussite en bas) :**
+
+| Critère | OK ? |
+|---|---|
+| Chaque commande manuelle est rattachée à une étape canonique (Source / Build / Test / Package / Deploy) | ☐ |
+| L'étape **Test absente** est explicitement repérée | ☐ |
+| Le risque du `scp` destructif (écrasement, aucun artefact, rollback impossible) est nommé | ☐ |
+| Le schéma cible ordonne les 5 étapes avec l'outil pressenti pour chacune | ☐ |
+| Le niveau CD (delivery vs deployment) est choisi **et** justifié par la maturité des tests | ☐ |
+| Le backlog est **ordonné** et la 1re tâche justifiée en valeur/effort | ☐ |
+| La priorisation place la **CI d'abord**, pas le déploiement | ☐ |
+
+**Seuil :** 6/7 cochés, dont **obligatoirement** « Test absente repérée » et « CI d'abord » — ce sont les deux acquis non négociables de ce lab.
+
+**Coach — conduite de session (relances + pièges) :**
+- Relance si silence : « Sur les 5 commandes, laquelle ne correspond à **aucune** étape canonique ? Qu'est-ce que ce trou révèle ? »
+- « Tu as mis le déploiement auto en tâche 1 : qu'automatises-tu au juste si les tests ne tournent toujours pas ? »
+- « Delivery ou deployment — ta décision repose sur une intuition, ou sur la couverture de tests réelle d'aujourd'hui ? »
+- Piège à débusquer : l'apprenant qui laisse Package et Deploy fusionnés sans artefact versionné → lui demander « comment reviens-tu à la version d'hier à 2h du matin ? ».
+- Piège : priorisation par « ce qui est facile » plutôt que par ROI → recentrer sur le rapport valeur/effort.
+
 ---
 
 ## Variante J+30 (fading)

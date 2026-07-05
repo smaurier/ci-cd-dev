@@ -1,7 +1,7 @@
 # Lab 05 — Artefacts & registries : publier l'image TribuZen sur GHCR
 
 > **Outcome :** à la fin, tu sais écrire un workflow GitHub Actions qui build l'image du backend TribuZen et la pousse sur GHCR avec des tags propres (semver + sha + latest), authentifié au moindre privilège.
-> **Vrai outil :** GitHub Actions + Docker Buildx + GHCR (`ghcr.io`). Actions réelles : `docker/login-action@v3`, `docker/metadata-action@v5`, `docker/build-push-action@v6`.
+> **Vrai outil :** GitHub Actions + Docker Buildx + GHCR (`ghcr.io`). Actions réelles : `docker/login-action@v4`, `docker/metadata-action@v6`, `docker/build-push-action@v7`.
 > **Feedback :** le coach relit le workflow en session et vérifie les tags produits dans l'onglet Packages du repo — pas de test-runner auto-correcteur.
 
 ---
@@ -37,7 +37,7 @@ jobs:
     runs-on: ubuntu-latest
     # À toi : permissions minimales
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       # À toi : login GHCR, metadata (tags), build-push
 ```
 
@@ -49,9 +49,9 @@ jobs:
 
 1. **Déclencheurs** — bloc `on:` avec `push.tags: ['v*']` et `push.branches: [main]`.
 2. **Permissions** — au niveau du job : `contents: read` + `packages: write`, rien d'autre.
-3. **Login** — `docker/login-action@v3` sur `registry: ghcr.io`, `username: github.actor`, `password: secrets.GITHUB_TOKEN` (dans un bloc code YAML, avec la syntaxe `${{ … }}`).
-4. **Métadonnées** — `docker/metadata-action@v5` avec `id: meta`, `images:` pointant sur `ghcr.io/<owner>/tribuzen-api`, et les 4 lignes `tags:` (2× semver, sha, raw latest conditionné à la branche par défaut).
-5. **Build & push** — `docker/build-push-action@v6` avec `push: true`, `tags: ${{ steps.meta.outputs.tags }}`, `labels: ${{ steps.meta.outputs.labels }}`.
+3. **Login** — `docker/login-action@v4` sur `registry: ghcr.io`, `username: github.actor`, `password: secrets.GITHUB_TOKEN` (dans un bloc code YAML, avec la syntaxe `${{ … }}`).
+4. **Métadonnées** — `docker/metadata-action@v6` avec `id: meta`, `images:` pointant sur `ghcr.io/<owner>/tribuzen-api`, et les 4 lignes `tags:` (2× semver, sha, raw latest conditionné à la branche par défaut).
+5. **Build & push** — `docker/build-push-action@v7` avec `push: true`, `tags: ${{ steps.meta.outputs.tags }}`, `labels: ${{ steps.meta.outputs.labels }}`.
 6. **Vérifier** — pousse un tag `v0.1.0`, puis dans Packages contrôle que `0.1.0`, `0.1`, `sha-…` et `latest` existent bien.
 7. **Cas limite** — merge sur `main` **sans** tag : vérifie que seuls `sha-…` et `latest` apparaissent (aucun tag semver parasite).
 
@@ -79,12 +79,12 @@ jobs:
       packages: write
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       # 1) Auth GHCR avec le token éphémère du run.
       #    github.actor = l'utilisateur qui a déclenché ; GITHUB_TOKEN expire à la fin du run.
       - name: Login GHCR
-        uses: docker/login-action@v3
+        uses: docker/login-action@v4
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
@@ -93,7 +93,7 @@ jobs:
       # 2) Générer tags + labels depuis l'événement Git — jamais écrits à la main.
       - name: Métadonnées (tags + labels)
         id: meta
-        uses: docker/metadata-action@v5
+        uses: docker/metadata-action@v6
         with:
           images: ghcr.io/${{ github.repository_owner }}/tribuzen-api
           tags: |
@@ -105,7 +105,7 @@ jobs:
       # 3) Build multi-stage (Dockerfile du module 04) + push de TOUS les tags calculés.
       - name: Build & push
         id: build
-        uses: docker/build-push-action@v6
+        uses: docker/build-push-action@v7
         with:
           context: .
           push: true
@@ -144,7 +144,7 @@ jobs:
 
 **Même workflow, contraintes ajoutées, sans rouvrir ce corrigé ni le module :**
 
-1. Ajoute un **tag `sha`** signé : après le push, une étape `sigstore/cosign-installer@v3` puis `cosign sign --yes ghcr.io/<owner>/tribuzen-api@${{ steps.build.outputs.digest }}` (keyless via l'OIDC — pense à ajouter `id-token: write` aux permissions).
+1. Ajoute un **tag `sha`** signé : après le push, une étape `sigstore/cosign-installer@v4` puis `cosign sign --yes ghcr.io/<owner>/tribuzen-api@${{ steps.build.outputs.digest }}` (keyless via l'OIDC — pense à ajouter `id-token: write` aux permissions).
 2. Active les attestations : `sbom: true` et `provenance: mode=max` sur `build-push-action`.
 3. Fais tout ça **en 25 minutes**, de mémoire.
 

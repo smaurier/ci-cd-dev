@@ -130,6 +130,28 @@ jobs:
 
 > Versions vérifiées le 2026-07 : `actions/checkout@v7`, `actions/setup-node@v6` sont les majeures stables courantes. Adapte si une majeure plus récente est publiée — épingle toujours à une majeure, jamais à une branche.
 
+**Grille d'auto-évaluation (coche — seuil de réussite en bas) :**
+
+| Critère | OK ? |
+|---|---|
+| Le workflow se nomme `CI` et déclenche sur push `main` + PR `main` + `workflow_dispatch` | ☐ |
+| `checkout` est le **premier** step | ☐ |
+| `setup-node` (v22 + `cache: 'npm'`) précède l'install | ☐ |
+| L'install utilise `npm ci` (**pas** `npm install`) | ☐ |
+| Lint et test sont **deux steps distincts** avec un `name:` lisible | ☐ |
+| Le run apparaît **vert** dans l'onglet Actions sur une vraie PR | ☐ |
+| Un lint volontairement cassé fait passer la PR au **rouge** (vérifié) | ☐ |
+| Le bouton « Run workflow » (`workflow_dispatch`) déclenche bien un run | ☐ |
+
+**Seuil :** 7/8 cochés, dont **obligatoirement** « checkout premier » et « `npm ci` » — sans eux, le workflow est faux même s'il passe au vert par hasard.
+
+**Coach — conduite de session (relances + pièges) :**
+- Relance si silence : « Supprime mentalement le step checkout — quelle est la première commande qui casse, et pourquoi ? »
+- « Pourquoi `npm ci` et pas `npm install` dans un runner neuf à chaque run ? »
+- « Lint et test dans le même `run:` — que perds-tu dans les logs le jour où le lint casse ? »
+- « Tu as épinglé une action sur `@main` : que se passe-t-il quand le mainteneur pousse un breaking change ? »
+- Piège à débusquer : `cache: 'npm'` posé sans `setup-node` avant ; oublier qu'un **second job** (variante J+30) repart d'une machine vierge et exige son propre checkout + setup-node.
+
 ---
 
 ## Variante J+30 (fading)

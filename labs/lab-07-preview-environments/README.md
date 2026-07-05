@@ -52,7 +52,7 @@ jobs:
     runs-on: ubuntu-latest
     # environment: name / url ?
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       # setup-node + npm ci + build ?
       # deploy (récupérer l'URL en output) ?
       # seed ?
@@ -69,7 +69,7 @@ jobs:
   destroy-preview:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       # destroy ?
 ```
 
@@ -122,10 +122,10 @@ jobs:
       name: pr-${{ github.event.pull_request.number }}
       url: ${{ steps.deploy.outputs.url }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       # Build de l'app (identique à la CI ; cache npm pour la vitesse)
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v6
         with: { node-version: '22', cache: 'npm' }
       - run: npm ci
       - run: npm run build
@@ -173,7 +173,7 @@ jobs:
   destroy-preview:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       # destroy-preview.sh est idempotent : succès même si l'environnement n'existe plus
       # (double closed, ou déjà nettoyé par le reaper).
       - name: Détruire la preview
@@ -196,7 +196,7 @@ jobs:
   reap:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - uses: actions/github-script@v7
         id: open-prs
         with:

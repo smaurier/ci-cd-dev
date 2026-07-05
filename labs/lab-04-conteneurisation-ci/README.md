@@ -130,7 +130,7 @@ jobs:
   build-image:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       # Buildx est requis pour le cache distant type=gha
       # (le builder Docker legacy ne sait pas l'exporter).
@@ -154,6 +154,28 @@ jobs:
 - **`npm ci` (×2)** : install reproductible ; le second `--omit=dev` allège l'image finale.
 - **`.dockerignore`** : le `COPY . .` ne réintroduit pas `node_modules` de l'hôte (binaires potentiellement incompatibles) ni les `.env` locaux.
 - **`push: false`** : sur une PR on prouve que l'image build sans publier. Le login au registry + `push: true` + tags sémantiques viennent au module 05.
+
+**Grille d'auto-évaluation (coche — seuil de réussite en bas) :**
+
+| Critère | OK ? |
+|---|---|
+| Dockerfile **multi-stage** : stage `build` (toolchain) + stage final minimal | ☐ |
+| `COPY package*.json` + `npm ci` **avant** `COPY . .` (ordre de cache) | ☐ |
+| Le stage final n'embarque que `dist/` + deps de prod (`npm ci --omit=dev`) | ☐ |
+| `.dockerignore` exclut `node_modules`, `dist`, `.git`, `.env*`, `*.log` | ☐ |
+| Image finale **< 250 Mo** (`docker images` pour vérifier) | ☐ |
+| 2e build sans changer le code → la layer `npm ci` affiche `CACHED` | ☐ |
+| Workflow : `setup-buildx-action@v4` **avant** `build-push-action@v7`, `push: false` | ☐ |
+| Cache `cache-from` **et** `cache-to: type=gha` présents | ☐ |
+
+**Seuil :** 7/8 cochés, dont **obligatoirement** « multi-stage » et « `npm ci` avant `COPY . .` » — le reste est optimisation, ces deux-là sont l'objectif du lab.
+
+**Coach — conduite de session (relances + pièges) :**
+- Relance si silence : « Déplace `COPY . .` avant `npm ci` dans ta tête — à quelle fréquence le cache d'install sautera-t-il désormais ? »
+- « Ton image finale contient-elle `tsc` / nest-cli ? Où sont-ils censés rester ? »
+- « Buildx n'est pas dans le workflow : `cache-to: type=gha` fonctionne-t-il avec le builder Docker legacy ? »
+- « Tu retires `.dockerignore` : qu'est-ce qui risque d'entrer dans l'image depuis l'hôte ? »
+- Piège à débusquer : `npm install` au lieu de `npm ci` ; `--omit=dev` oublié au stage final (image gonflée) ; `push: true` laissé sur une PR.
 
 ---
 

@@ -26,7 +26,7 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - uses: tj-actions/changed-files@v44
       - name: Announce
         run: echo "Deploying PR ${{ github.event.head_commit.message }}"

@@ -28,7 +28,7 @@ Le pipeline de TribuZen construit déjà l'image du backend (module 04). À la f
 
 ```yaml
 # .github/workflows/deploy.yml — AVANT (fragile)
-- uses: docker/build-push-action@v6
+- uses: docker/build-push-action@v7
   with:
     context: .
     push: true
@@ -70,9 +70,9 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - run: npm ci && npm run build
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: dist                 # identifiant logique dans ce run
           path: dist/
@@ -82,7 +82,7 @@ jobs:
     needs: build                     # attend que build soit fini
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v8
         with:
           name: dist
           path: dist/
@@ -113,7 +113,7 @@ Un même digest d'image peut porter plusieurs tags. Les trois familles utiles :
 ```yaml
 - name: Métadonnées (tags + labels)
   id: meta
-  uses: docker/metadata-action@v5
+  uses: docker/metadata-action@v6
   with:
     images: ghcr.io/smaurier/tribuzen-api
     tags: |
@@ -145,8 +145,8 @@ jobs:
       contents: read       # lire le repo
       packages: write      # écrire sur GHCR — le strict nécessaire
     steps:
-      - uses: actions/checkout@v4
-      - uses: docker/login-action@v3
+      - uses: actions/checkout@v7
+      - uses: docker/login-action@v4
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
@@ -180,7 +180,7 @@ Publier ne prouve pas *qui* a construit l'image ni *avec quoi*. Trois briques de
 - **Signature (cosign / Sigstore)** — signe l'image pour prouver son origine. Le mode **keyless** utilise l'OIDC de GitHub Actions : pas de clé privée à stocker. Signature :
 
   ```yaml
-  - uses: sigstore/cosign-installer@v3
+  - uses: sigstore/cosign-installer@v4
   - run: cosign sign --yes ghcr.io/smaurier/tribuzen-api@${{ steps.build.outputs.digest }}
   ```
 
@@ -196,7 +196,7 @@ Publier ne prouve pas *qui* a construit l'image ni *avec quoi*. Trois briques de
 - **SBOM** (*Software Bill of Materials*) — l'inventaire des dépendances de l'image. Répond à « suis-je affecté par la CVE de telle lib ? ». `docker/build-push-action` peut le générer :
 
   ```yaml
-  - uses: docker/build-push-action@v6
+  - uses: docker/build-push-action@v7
     with:
       push: true
       sbom: true             # attache un SBOM à l'image
@@ -231,10 +231,10 @@ jobs:
       contents: read
       packages: write      # least privilege : écrire sur GHCR, rien de plus
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       # 1) Auth GHCR via le token du run (pas de secret à gérer)
-      - uses: docker/login-action@v3
+      - uses: docker/login-action@v4
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
@@ -242,7 +242,7 @@ jobs:
 
       # 2) Générer les tags à partir de l'événement Git
       - id: meta
-        uses: docker/metadata-action@v5
+        uses: docker/metadata-action@v6
         with:
           images: ghcr.io/${{ github.repository_owner }}/tribuzen-api
           tags: |
@@ -253,7 +253,7 @@ jobs:
 
       # 3) Build + push avec tous les tags calculés
       - id: build
-        uses: docker/build-push-action@v6
+        uses: docker/build-push-action@v7
         with:
           context: .
           push: true
@@ -278,9 +278,9 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - run: npm ci && npm run build      # produit dist/
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: front-dist
           path: dist/
@@ -290,7 +290,7 @@ jobs:
     needs: build
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v8
         with:
           name: front-dist
           path: dist/
@@ -327,7 +327,7 @@ Repousser `1.4.2` vers un autre digest **réécrit** le tag sans erreur. Le tag 
 
 ```yaml
 # ❌ upload-artifact ne "publie" pas une image déployable
-- uses: actions/upload-artifact@v4
+- uses: actions/upload-artifact@v7
   with: { name: image, path: image.tar }
 ```
 
@@ -394,7 +394,7 @@ tribuzen/
 3. GHCR (`ghcr.io/OWNER/IMAGE`) s'authentifie avec le `GITHUB_TOKEN` du run ; Docker Hub demande un access token en secret.
 4. Trois familles de tags : semver (lisible), sha (traçable/immuable), latest (mouvant, à éviter en prod).
 5. Un tag est un pointeur réécrivable ; seule référence vraiment immuable = le digest `@sha256:…`.
-6. `docker/metadata-action@v5` génère tags + labels automatiquement depuis l'événement Git.
+6. `docker/metadata-action@v6` génère tags + labels automatiquement depuis l'événement Git.
 7. Moindre privilège : `permissions: { contents: read, packages: write }` par job, jamais un PAT large.
 8. Rétention : `retention-days` sur les artefacts + purge planifiée des vieux tags sha, en gardant les releases.
 9. cosign keyless signe le **digest** via l'OIDC ; `sbom: true` + `provenance: mode=max` attachent l'inventaire et l'origine (survol — cours 14 pour le fond).
@@ -407,7 +407,7 @@ tribuzen/
 Quelle est la différence entre un artefact de build et une image de conteneur ?|L'artefact (upload-artifact) est éphémère et sert à transporter des fichiers entre jobs d'un run. L'image est un livrable durable, versionné par tag/digest, stocké dans un registry et déployable ailleurs.
 Pourquoi ne jamais déployer par le tag latest en production ?|latest est un pointeur mouvant : deux pull à des moments différents peuvent donner deux images différentes. On déploie par digest @sha256:… ou par un tag sha-… immuable pour la traçabilité et le rollback.
 Quelle est la seule référence vraiment immuable d'une image ?|Le digest @sha256:… — un tag (même semver) peut être repoussé vers un autre digest et donc réécrit silencieusement.
-Comment s'authentifier à GHCR dans un workflow avec le moins de privilèges ?|docker/login-action@v3 avec registry ghcr.io, username github.actor, password secrets.GITHUB_TOKEN, et permissions du job limitées à contents:read + packages:write. Le GITHUB_TOKEN est éphémère et scoppé au repo.
+Comment s'authentifier à GHCR dans un workflow avec le moins de privilèges ?|docker/login-action@v4 avec registry ghcr.io, username github.actor, password secrets.GITHUB_TOKEN, et permissions du job limitées à contents:read + packages:write. Le GITHUB_TOKEN est éphémère et scoppé au repo.
 À quoi sert docker/metadata-action ?|À générer automatiquement les tags (type=semver, type=sha, type=raw latest) et les labels OCI depuis l'événement Git, puis à les brancher sur build-push-action via steps.meta.outputs.tags/labels.
 Que signifie signer une image en keyless avec cosign ?|cosign obtient un jeton OIDC (ex. celui de GitHub Actions), Fulcio émet un certificat X.509 court, et l'image est signée sans clé privée à stocker. On signe le digest, pas un tag mouvant.
 Que contient un SBOM et à quoi répond-il ?|Software Bill of Materials = inventaire des dépendances de l'image. Il répond immédiatement à « suis-je affecté par cette CVE ? » sur l'image en production.

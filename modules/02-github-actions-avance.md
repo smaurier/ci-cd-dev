@@ -1,7 +1,7 @@
 ---
 titre: GitHub Actions — Avancé (matrix, cache, artefacts, workflows réutilisables)
 cours: 15-cicd-devops
-notions: ["matrix strategy (include/exclude/fail-fast)", "actions/cache@v4 + restore-keys", "artefacts upload/download-artifact v4", "reusable workflows (workflow_call)", "composite actions", "contexts et expressions", "concurrency (cancel-in-progress)", "conditions if et needs.result", "environments et approvals"]
+notions: ["matrix strategy (include/exclude/fail-fast)", "actions/cache@v6 + restore-keys", "artefacts upload/download-artifact v4", "reusable workflows (workflow_call)", "composite actions", "contexts et expressions", "concurrency (cancel-in-progress)", "conditions if et needs.result", "environments et approvals"]
 outcomes:
   - sait construire une matrix build avec include/exclude et fail-fast
   - sait accélérer un pipeline avec actions/cache et restore-keys
@@ -38,8 +38,8 @@ jobs:
   quality:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v6
         with:
           node-version: '22'
       - run: npm ci          # ~90 s à chaque run, rien n'est mis en cache
@@ -76,8 +76,8 @@ jobs:
         os: [ubuntu-latest, windows-latest]  # 2 valeurs
     runs-on: ${{ matrix.os }}                # → 2 × 2 = 4 jobs
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v6
         with:
           node-version: ${{ matrix.node }}
       - run: npm ci
@@ -116,22 +116,22 @@ strategy:
 
 `max-parallel` plafonne le nombre de combinaisons simultanées (utile pour ménager un service externe ou un quota de runners).
 
-### 2.2 Cache des dépendances — `actions/cache@v4`
+### 2.2 Cache des dépendances — `actions/cache@v6`
 
 Deux niveaux. Le plus simple : `setup-node` sait cacher le **cache npm** (`~/.npm`) tout seul via `cache: 'npm'`.
 
 ```yaml
-- uses: actions/setup-node@v4
+- uses: actions/setup-node@v6
   with:
     node-version: '22'
     cache: 'npm'          # cache automatique de ~/.npm, keyé sur package-lock.json
 - run: npm ci
 ```
 
-Le cache générique `actions/cache@v4` sert quand tu veux cacher **autre chose** (build Vite, `.turbo`, Playwright browsers, `node_modules` complet…) :
+Le cache générique `actions/cache@v6` sert quand tu veux cacher **autre chose** (build Vite, `.turbo`, Playwright browsers, `node_modules` complet…) :
 
 ```yaml
-- uses: actions/cache@v4
+- uses: actions/cache@v6
   id: cache-deps
   with:
     path: |
@@ -162,12 +162,12 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v6
         with: { node-version: '22', cache: 'npm' }
       - run: npm ci
       - run: npm run build
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: dist
           path: dist/
@@ -177,7 +177,7 @@ jobs:
     needs: build                   # attend que build réussisse
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v8
         with:
           name: dist
           path: dist/              # restauré ici
@@ -187,13 +187,13 @@ jobs:
 **⚠️ Changement majeur en v4 : les artefacts sont immuables.** On **ne peut pas** uploader deux fois le même `name` dans un workflow (erreur). En matrix, chaque combinaison doit donc produire un nom unique :
 
 ```yaml
-- uses: actions/upload-artifact@v4
+- uses: actions/upload-artifact@v7
   with:
     name: dist-${{ matrix.os }}-node${{ matrix.node }}   # nom unique par combinaison
     path: dist/
 ```
 
-Côté download, `actions/download-artifact@v4` télécharge par `name`, ou **tous** les artefacts si `name` est omis (un sous-dossier par artefact), avec un `pattern:` + `merge-multiple: true` pour regrouper. (`download-artifact@v5` existe et est rétro-compatible ; `v4` reste le duo standard avec `upload-artifact@v4`.)
+Côté download, `actions/download-artifact@v8` télécharge par `name`, ou **tous** les artefacts si `name` est omis (un sous-dossier par artefact), avec un `pattern:` + `merge-multiple: true` pour regrouper. (`upload-artifact` et `download-artifact` ont des majeures **découplées** : ce ne sont pas deux moitiés d'un duo qui avancent ensemble. En 2026, les majeures courantes sont `upload-artifact@v7` et `download-artifact@v8`. L'immuabilité des artefacts, elle, existe depuis `upload-artifact@v4`.)
 
 ### 2.4 Factoriser : reusable workflow vs composite action
 
@@ -216,7 +216,7 @@ outputs:
 runs:
   using: composite
   steps:
-    - uses: actions/setup-node@v4
+    - uses: actions/setup-node@v6
       with:
         node-version: ${{ inputs.node-version }}
         cache: 'npm'
@@ -231,7 +231,7 @@ Utilisation — comme n'importe quelle action, avec un chemin local :
 
 ```yaml
 steps:
-  - uses: actions/checkout@v4
+  - uses: actions/checkout@v7
   - uses: ./.github/actions/setup-project    # pas de @ref pour un chemin local
     with:
       node-version: '20'
@@ -261,8 +261,8 @@ jobs:
     outputs:
       coverage: ${{ steps.cov.outputs.pct }}
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v6
         with: { node-version: ${{ inputs.node-version }}, cache: 'npm' }
       - run: npm ci
       - id: cov
@@ -408,8 +408,8 @@ jobs:
         node: [20, 22]
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v6
         with:
           node-version: ${{ matrix.node }}
           cache: 'npm'                 # cache npm géré par setup-node
@@ -421,12 +421,12 @@ jobs:
     needs: test                        # ne build que si tous les tests passent
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v6
         with: { node-version: '22', cache: 'npm' }
       - run: npm ci
       - run: npm run build
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: dist                   # nom unique (un seul job build, hors matrix)
           path: dist/
@@ -440,7 +440,7 @@ jobs:
       name: production
       url: https://app.tribuzen.fr
     steps:
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v8
         with: { name: dist, path: dist/ }
       - run: ./scripts/deploy.sh
         env:
@@ -464,7 +464,7 @@ inputs:
 runs:
   using: composite
   steps:
-    - uses: actions/setup-node@v4
+    - uses: actions/setup-node@v6
       with:
         node-version: ${{ inputs.node-version }}
         cache: 'npm'
@@ -479,11 +479,11 @@ Le job `build` devient :
     needs: test
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4     # checkout reste AVANT (la composite lit le repo)
+      - uses: actions/checkout@v7     # checkout reste AVANT (la composite lit le repo)
       - uses: ./.github/actions/setup-project
         with: { node-version: '22' }
       - run: npm run build
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with: { name: dist, path: dist/, retention-days: 7 }
 ```
 
@@ -505,7 +505,7 @@ deploy:
     - run: ls dist/       # dossier vide → échec
 
 # ✅ transiter par un artefact
-    - uses: actions/download-artifact@v4
+    - uses: actions/download-artifact@v8
       with: { name: dist, path: dist/ }
 ```
 
@@ -570,7 +570,7 @@ tribuzen/
 ## 6. Points clés
 
 1. `strategy.matrix` génère un job par combinaison ; `include` ajoute/enrichit, `exclude` retranche, `fail-fast: false` révèle tous les échecs, `max-parallel` plafonne.
-2. `actions/cache@v4` accélère via `key` (identité exacte, souvent `hashFiles(lockfile)`) + `restore-keys` (replis) ; `setup-node` avec `cache: 'npm'` suffit pour le cas npm standard.
+2. `actions/cache@v6` accélère via `key` (identité exacte, souvent `hashFiles(lockfile)`) + `restore-keys` (replis) ; `setup-node` avec `cache: 'npm'` suffit pour le cas npm standard.
 3. Chaque job a un disque neuf : transporter des fichiers = `upload-artifact@v4` / `download-artifact@v4`. En v4 les artefacts sont **immuables** → nom unique par combinaison matrix.
 4. Composite action = steps réutilisés dans un job (`uses:` d'un step, `shell:` requis) ; reusable workflow = jobs réutilisés entre workflows (`uses:` d'un job, `workflow_call`).
 5. Les expressions `${{ }}` lisent des contexts (`github`, `matrix`, `needs`, `steps`, `runner`, `secrets`) ; hors bloc de code, ne jamais écrire les délimiteurs.
@@ -586,7 +586,7 @@ tribuzen/
 Combien de jobs génère une matrix node:[20,22] os:[ubuntu,windows] ?|4 jobs — produit cartésien des axes (2 × 2). Chaque combinaison lit ses valeurs via le contexte matrix (matrix.node, matrix.os).
 Différence entre include et exclude dans une matrix ?|exclude retire des combinaisons du produit cartésien ; include ajoute une combinaison supplémentaire (ou enrichit une existante si tous ses axes matchent). exclude est appliqué avant include.
 À quoi sert fail-fast: false dans une matrix ?|Empêcher GitHub d'annuler les autres combinaisons dès qu'une échoue — on voit ainsi TOUS les échecs (ex. savoir si Node 22 passe même si Node 20 casse). Défaut = true.
-Rôle de key vs restore-keys dans actions/cache@v4 ?|key = identité exacte du cache (souvent runner.os + hashFiles(lockfile)) ; si elle change, un nouveau cache est écrit. restore-keys = clés de repli par préfixe, essayées si la key exacte ne matche pas, pour récupérer un cache proche.
+Rôle de key vs restore-keys dans actions/cache@v6 ?|key = identité exacte du cache (souvent runner.os + hashFiles(lockfile)) ; si elle change, un nouveau cache est écrit. restore-keys = clés de repli par préfixe, essayées si la key exacte ne matche pas, pour récupérer un cache proche.
 Cache ou artefact pour transmettre le dist/ de build à deploy ?|Artefact (upload-artifact puis download-artifact). Le cache est best-effort et peut être évincé — jamais pour un livrable qu'un job DOIT trouver. Chaque job a un disque neuf.
 Pourquoi une matrix ne peut-elle pas uploader deux fois name: dist en v4 ?|Les artefacts sont immuables en v4 : deux uploads du même name lèvent une erreur. Il faut un nom unique par combinaison, ex. name: dist-node${{ matrix.node }}.
 Composite action vs reusable workflow : lequel réutilise des steps, lequel des jobs ?|Composite action = paquet de STEPS réutilisé dans un job (uses d'un step, shell requis). Reusable workflow = WORKFLOW entier (jobs) appelé via workflow_call dans le uses d'un JOB.

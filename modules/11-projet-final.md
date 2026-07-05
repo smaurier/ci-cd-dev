@@ -103,8 +103,8 @@ jobs:
       matrix:
         node: [20, 22]          # back testé sur 2 versions (module 02)
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v6
         with:
           node-version: ${{ matrix.node }}
           cache: 'npm'
@@ -130,7 +130,7 @@ Une fois `quality` vert, on produit **l'artefact déployable** : l'image Docker 
     outputs:
       digest: ${{ steps.build.outputs.digest }}   # transmis au job deploy
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - uses: docker/setup-buildx-action@v4
       - uses: docker/login-action@v4
         with:
@@ -177,8 +177,8 @@ Le déploiement de prod suit une **stratégie canary** (module 06) : on route un
       group: deploy-production    # un seul déploiement prod à la fois
       cancel-in-progress: false   # ne JAMAIS couper un déploiement en cours
     steps:
-      - uses: actions/checkout@v4
-      - uses: aws-actions/configure-aws-credentials@v4
+      - uses: actions/checkout@v7
+      - uses: aws-actions/configure-aws-credentials@v6
         with:
           role-to-assume: arn:aws:iam::123456789012:role/tribuzen-deploy
           aws-region: eu-west-3
@@ -223,7 +223,7 @@ jobs:
       name: preview-${{ github.event.number }}
       url: ${{ steps.deploy.outputs.url }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - id: deploy
         run: |
           URL=$(./scripts/deploy-preview.sh "pr-${{ github.event.number }}")
@@ -251,7 +251,7 @@ permissions:
   contents: read
 
 steps:
-  - uses: aws-actions/configure-aws-credentials@v4
+  - uses: aws-actions/configure-aws-credentials@v6
     with:
       role-to-assume: arn:aws:iam::123456789012:role/tribuzen-deploy
       aws-region: eu-west-3
@@ -319,8 +319,8 @@ jobs:
       matrix:
         node: [20, 22]
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v6
         with: { node-version: '${{ matrix.node }}', cache: 'npm' }
       - run: npm ci
       - run: npm run lint
@@ -336,7 +336,7 @@ jobs:
     outputs:
       digest: ${{ steps.build.outputs.digest }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - uses: docker/setup-buildx-action@v4
       - uses: docker/login-action@v4
         with:
@@ -372,8 +372,8 @@ jobs:
       name: production              # approval + secrets dédiés (UI)
       url: https://app.tribuzen.fr
     steps:
-      - uses: actions/checkout@v4
-      - uses: aws-actions/configure-aws-credentials@v4
+      - uses: actions/checkout@v7
+      - uses: aws-actions/configure-aws-credentials@v6
         with:
           role-to-assume: arn:aws:iam::123456789012:role/tribuzen-deploy
           aws-region: eu-west-3
@@ -426,8 +426,8 @@ jobs:
   quality:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v6
         with: { node-version: '22', cache: 'npm' }
       - run: npm ci
       - run: npm run test:cov       # même porte que la prod : pas de preview si rouge
@@ -442,7 +442,7 @@ jobs:
       name: preview-${{ github.event.number }}
       url: ${{ steps.deploy.outputs.url }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - id: deploy
         run: |
           URL=$(./scripts/deploy-preview.sh "pr-${{ github.event.number }}")
@@ -471,7 +471,7 @@ jobs:
     permissions:
       id-token: write
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - run: ./scripts/destroy-preview.sh "pr-${{ github.event.number }}"
 ```
 

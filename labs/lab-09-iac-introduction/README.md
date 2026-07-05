@@ -158,8 +158,8 @@ jobs:
       run:
         working-directory: infra   # toutes les commandes tournent dans infra/
     steps:
-      - uses: actions/checkout@v4
-      - uses: aws-actions/configure-aws-credentials@v4
+      - uses: actions/checkout@v7
+      - uses: aws-actions/configure-aws-credentials@v6
         with:
           role-to-assume: ${{ secrets.AWS_TF_ROLE }}  # rôle assumé via OIDC, pas de clé statique
           aws-region: eu-west-3
@@ -177,8 +177,8 @@ jobs:
       run:
         working-directory: infra
     steps:
-      - uses: actions/checkout@v4
-      - uses: aws-actions/configure-aws-credentials@v4
+      - uses: actions/checkout@v7
+      - uses: aws-actions/configure-aws-credentials@v6
         with:
           role-to-assume: ${{ secrets.AWS_TF_ROLE }}
           aws-region: eu-west-3

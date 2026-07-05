@@ -58,7 +58,7 @@ jobs:
   unit:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       # À toi : setup-node + cache, npm ci, tests + gate couverture, upload rapport (if: always)
 
   # À toi : job integration (service postgres + health-check + migrate + tests)
@@ -98,10 +98,10 @@ jobs:
   unit:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       # cache: npm → clé dérivée du lockfile (module 02). Accélère npm ci.
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v6
         with:
           node-version: 22
           cache: npm
@@ -117,7 +117,7 @@ jobs:
       # if: always() → on garde le rapport MÊME si l'étape de test a échoué (le moment utile).
       - name: Conserver le rapport de couverture
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: coverage-unit          # nom unique (un seul job unit → pas de collision)
           path: coverage/
@@ -149,8 +149,8 @@ jobs:
           --health-timeout 5s
           --health-retries 5             # GitHub attend que la base soit PRÊTE avant les steps
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v6
         with:
           node-version: 22
           cache: npm
@@ -178,8 +178,8 @@ jobs:
       matrix:
         shard: [1, 2, 3, 4]
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v6
         with:
           node-version: 22
           cache: npm
@@ -193,7 +193,7 @@ jobs:
       # Nom UNIQUE par shard : un artefact v4 est immuable, deux "report" entreraient en collision.
       - name: Uploader le rapport partiel
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: report-${{ matrix.shard }}
           path: playwright-report/
@@ -207,7 +207,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       # pattern: report-* + merge-multiple → tous les shards dans un seul dossier.
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v8
         with:
           pattern: report-*
           merge-multiple: true
@@ -221,6 +221,28 @@ jobs:
 - `if: always()` sur les uploads : le rapport survit à un job rouge, sinon il manquerait pile quand on en a besoin.
 - Le service Postgres a un **health-check** : les steps ne démarrent qu'une fois `pg_isready` vert → pas de `ECONNREFUSED` de démarrage. Host = `localhost` car le job tourne **sur** le runner (aucun `container:`).
 - Sharding : **nom d'artefact unique par shard** (immutabilité v4) + `fail-fast: false` (voir tous les échecs) + job de fusion avec `pattern`/`merge-multiple`.
+
+**Grille d'auto-évaluation (coche — seuil de réussite en bas) :**
+
+| Critère | OK ? |
+|---|---|
+| Job `unit` : `--coverage`, la gate 80 % vient de `vitest.config.ts` (pas d'un `if` shell) | ☐ |
+| Le rapport de couverture est uploadé avec `if: always()` | ☐ |
+| Job `integration` : service `postgres:16` avec health-check `pg_isready` | ☐ |
+| `db:migrate` s'exécute **avant** `test:integration` | ☐ |
+| Host de la DB = `localhost` (job sur le runner, aucun `container:`) | ☐ |
+| Job `e2e` : `matrix.shard [1,2,3,4]` **+** `fail-fast: false` | ☐ |
+| Chaque shard uploade un artefact à **nom unique** (`report-<shard>`) | ☐ |
+| Job `e2e-report` fusionne via `download-artifact` `pattern: report-*` + `merge-multiple: true` | ☐ |
+
+**Seuil :** 7/8 cochés, dont **obligatoirement** « gate hors YAML » et « nom d'artefact unique par shard » — les deux pièges qui font échouer silencieusement le pipeline.
+
+**Coach — conduite de session (relances + pièges) :**
+- Relance si silence : « À 76 % de couverture, d'où vient exactement le `exit 1` — de ton YAML, ou d'ailleurs ? »
+- « Ton service Postgres : le step de test démarre-t-il avant ou après que la base soit prête ? Qu'est-ce qui le garantit ? »
+- « Tu nommes tes 4 rapports `report` tout court : que répond GitHub au 2e upload, sachant que les artefacts sont immuables ? »
+- « Sans `fail-fast: false`, un shard qui plante fait quoi aux trois autres ? »
+- Piège à débusquer : host `postgres` au lieu de `localhost` quand le job tourne **sur** le runner ; gate de couverture recodée en `jq`/`bc` au lieu de s'appuyer sur le seuil de `vitest.config.ts`.
 
 ---
 

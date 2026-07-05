@@ -121,7 +121,7 @@ jobs:
   build-and-test:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v6   # étape Source
+      - uses: actions/checkout@v7   # étape Source
       - run: pnpm install           # dépendances
       - run: pnpm build             # étape Build
       - run: pnpm test              # étape Test

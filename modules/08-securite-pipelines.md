@@ -41,7 +41,7 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4                      # ❌ FAILLE 2 : tag mutable
+      - uses: actions/checkout@v7                      # ❌ FAILLE 2 : tag mutable
       - uses: tj-actions/changed-files@v44             # ❌ FAILLE 2 : tag mutable
       - name: Deploy to AWS
         env:
@@ -114,7 +114,7 @@ Le niveau **environment** est le plus puissant en sécurité : couplé aux **req
 
 Règles de survie :
 
-- On lit un secret **uniquement** via le contexte `secrets` dans un bloc de code : `${{ secrets.DEPLOY_TOKEN }}`. Jamais en dur dans le YAML.
+- On lit un secret **uniquement** via le contexte `secrets` dans un bloc de code : `secrets.DEPLOY_TOKEN`. Jamais en dur dans le YAML.
 - GitHub **masque** les secrets dans les logs (remplacés par `***`), mais un `echo` d'un secret transformé (base64, découpé) peut fuiter. Ne les affiche jamais.
 - Un secret n'est **pas** passé aux workflows déclenchés depuis un fork (`pull_request` d'un contributeur externe) — sécurité by design.
 
@@ -160,7 +160,7 @@ jobs:
       security-events: write        # requis : CodeQL remonte les alertes dans l'onglet Security
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - uses: github/codeql-action/init@v3
         with:
           languages: javascript-typescript
@@ -176,7 +176,7 @@ jobs:
       contents: read
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - uses: actions/dependency-review-action@v4
         with:
           fail-on-severity: high
@@ -202,16 +202,16 @@ updates:
 
 ### 2.5 Action pinning — épingler au SHA complet
 
-Une action référencée par **tag** (`@v4`) ou **branche** (`@main`) est une cible mouvante : quiconque a les droits d'écriture sur le repo de l'action peut **réécrire** ce tag vers un commit malveillant. C'est exactement l'attaque `tj-actions/changed-files` de mars 2025 (§1).
+Une action référencée par **tag** (`@v7`) ou **branche** (`@main`) est une cible mouvante : quiconque a les droits d'écriture sur le repo de l'action peut **réécrire** ce tag vers un commit malveillant. C'est exactement l'attaque `tj-actions/changed-files` de mars 2025 (§1).
 
 La seule référence **immuable** est le **SHA de commit complet** (40 caractères) — falsifier un SHA exigerait une collision SHA-1, hors de portée pratique :
 
 ```yaml
-# ❌ mutable : le tag v4 peut être déplacé vers du code piégé
-- uses: actions/checkout@v4
+# ❌ mutable : le tag v7 peut être déplacé vers du code piégé
+- uses: actions/checkout@v7
 
 # ✅ immuable : SHA complet, avec le tag en commentaire pour la lisibilité
-- uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+- uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v7.0.0
 ```
 
 Le commentaire `# v4.2.2` garde la référence lisible **et** permet à Dependabot (`package-ecosystem: github-actions`, §2.4) de proposer des bumps : il met à jour le SHA **et** le commentaire. On garde donc l'immuabilité sans figer indéfiniment une version vulnérable.
@@ -268,7 +268,7 @@ jobs:
       id-token: write                     # requis pour demander le JWT OIDC
       contents: read                      # cloner le repo
     steps:
-      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v7.0.0
 
       - name: Configure AWS credentials (OIDC)
         uses: aws-actions/configure-aws-credentials@b47578312673ae6fa5b5096b330d9fbac3d116df # v6.2.1
@@ -308,7 +308,7 @@ jobs:
       security-events: write              # override : CodeQL a besoin d'écrire ses alertes
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v7.0.0
       - uses: github/codeql-action/init@4e828ff8d448a8a6e532957b1811f387a63867e8 # v3.28.1
         with:
           languages: javascript-typescript
@@ -319,7 +319,7 @@ jobs:
       contents: read                      # hérite du plancher, sans security-events
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v7.0.0
       - uses: actions/dependency-review-action@3b139cfc5fae8b618d3eae3675e383bb1769c019 # v4.5.0
         with:
           fail-on-severity: high          # bloque la PR si une dépendance high+ est introduite
@@ -341,7 +341,7 @@ Le YAML (`id-token: write` + `configure-aws-credentials`) n'est que la **moitié
 
 ### PIÈGE #2 — Épingler à un tag en croyant que c'est immuable
 
-`@v4` **n'est pas** une version figée : c'est un tag Git, déplaçable par le mainteneur (ou un attaquant qui a compromis le repo). Seul le **SHA complet** est immuable. `@v4.2.2` non plus n'est pas garanti immuable — un tag reste un tag. C'est précisément ce qui a rendu l'attaque `tj-actions` possible.
+`@v7` **n'est pas** une version figée : c'est un tag Git, déplaçable par le mainteneur (ou un attaquant qui a compromis le repo). Seul le **SHA complet** est immuable. `@v7.0.0` non plus n'est pas garanti immuable — un tag reste un tag. C'est précisément ce qui a rendu l'attaque `tj-actions` possible.
 
 ### PIÈGE #3 — Oublier le bloc `permissions` en pensant « le défaut est read-only »
 
@@ -408,7 +408,7 @@ tribuzen/
 Que remplace l'OIDC dans un workflow de déploiement cloud ?|Les credentials cloud long terme stockés en secret (ex. clés IAM AWS). GitHub émet un JWT éphémère par job ; le cloud le vérifie et rend des credentials temporaires. Rien de permanent n'est stocké.
 Quelle permission un job doit-il avoir pour utiliser l'OIDC ?|id-token: write (dans le bloc permissions du job). Elle autorise le job à demander le JWT OIDC à GitHub. Sans elle, configure-aws-credentials échoue.
 Que vérifie le cloud pour décider s'il fait confiance à un run OIDC ?|Le sub claim du JWT, qui encode l'origine (ex. repo:smaurier/tribuzen:environment:production). La trust policy côté cloud (cours 12) restreint quels repos/branches/environments peuvent assumer le rôle.
-Pourquoi épingler une action à un SHA plutôt qu'à un tag @v4 ?|Un tag est mutable : le mainteneur (ou un attaquant ayant compromis le repo) peut le déplacer vers un commit malveillant. Seul le SHA complet est immuable. Cf. attaque tj-actions/changed-files, mars 2025.
+Pourquoi épingler une action à un SHA plutôt qu'à un tag @v7 ?|Un tag est mutable : le mainteneur (ou un attaquant ayant compromis le repo) peut le déplacer vers un commit malveillant. Seul le SHA complet est immuable. Cf. attaque tj-actions/changed-files, mars 2025.
 Que fait permissions: {} dans un workflow ?|Coupe tous les scopes du GITHUB_TOKEN : il ne peut plus rien faire sur le repo. C'est le plancher least privilege pour un job qui n'a pas besoin d'agir sur le dépôt.
 Un permissions au niveau job fusionne-t-il avec celui du workflow ?|Non, il le remplace. Les scopes non relistés dans le bloc du job retombent à none. Il faut relister tous les scopes voulus.
 Comment se protéger d'une script injection type ${{ github.event.pull_request.title }} dans un run ?|Ne pas interpoler la donnée externe dans le run (le shell l'exécuterait). La passer par une variable d'environnement (env:) que le shell ne réévalue pas.

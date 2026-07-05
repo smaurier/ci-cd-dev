@@ -179,7 +179,7 @@ terraform {
 
 Deuxième problème : deux `apply` en parallèle (deux devs, ou deux runs CI) sur le même state = corruption. D'où le **state locking** : avant d'écrire, Terraform pose un **verrou** ; un second run attend ou échoue proprement au lieu d'écraser.
 
-> **⚠️ À jour 2026 (vérifié docs) :** le backend S3 gère désormais le verrou **nativement** via `use_lockfile = true` (stable depuis Terraform 1.11 ; l'ancienne table **DynamoDB** dédiée au lock est **dépréciée**). HCP Terraform, lui, verrouille et met les runs en file d'attente automatiquement. Si tu lis un vieux tuto qui impose une table DynamoDB pour le lock, il est daté.
+> **⚠️ À jour 2026 (vérifié docs) :** le backend S3 gère désormais le verrou **nativement** via `use_lockfile = true` (lock natif S3 disponible depuis Terraform 1.10 ; l'ancienne table **DynamoDB** dédiée au lock est **dépréciée depuis 1.11**). HCP Terraform, lui, verrouille et met les runs en file d'attente automatiquement. Si tu lis un vieux tuto qui impose une table DynamoDB pour le lock, il est daté.
 
 ### 2.6 Le drift — quand le réel diverge du code
 
@@ -343,8 +343,8 @@ jobs:
       run:
         working-directory: infra
     steps:
-      - uses: actions/checkout@v4
-      - uses: aws-actions/configure-aws-credentials@v4
+      - uses: actions/checkout@v7
+      - uses: aws-actions/configure-aws-credentials@v6
         with:
           role-to-assume: ${{ secrets.AWS_TF_ROLE }}   # rôle assumé via OIDC, pas de clé long terme
           aws-region: eu-west-3
@@ -362,8 +362,8 @@ jobs:
       run:
         working-directory: infra
     steps:
-      - uses: actions/checkout@v4
-      - uses: aws-actions/configure-aws-credentials@v4
+      - uses: actions/checkout@v7
+      - uses: aws-actions/configure-aws-credentials@v6
         with:
           role-to-assume: ${{ secrets.AWS_TF_ROLE }}
           aws-region: eu-west-3

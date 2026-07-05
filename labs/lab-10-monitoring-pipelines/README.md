@@ -38,8 +38,8 @@ jobs:
   build-test:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v6
         with: { node-version: '22', cache: 'npm' }
       - run: npm ci
       - run: npm run build
@@ -117,8 +117,8 @@ jobs:
   build-test:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v6
         with: { node-version: '22', cache: 'npm' }
 
       - name: Install (chronométré)
@@ -178,7 +178,7 @@ jobs:
       name: production
       url: https://app.tribuzen.fr
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - run: ./scripts/deploy.sh          # (factice dans le lab)
       # Annotation horodatée = point de mesure de la deployment frequency + lead time
       - name: Marquer le déploiement
