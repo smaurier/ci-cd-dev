@@ -181,7 +181,7 @@ tribuzen/
 **Différences par rapport au lab :**
 - Le monorepo TribuZen aura plusieurs packages (front Vue, API NestJS) : le job `quality` filtrera peut-être par `paths:` ou tournera par workspace — affiné au module 02.
 - La matrice de versions (Node 20 + 22) et le cache fin arrivent au module 02 ; ici on reste sur un seul Node 22.
-- Le token de déploiement (`${{ secrets.DEPLOY_TOKEN }}`) n'apparaît qu'au workflow `deploy.yml` des modules 06-07 — `ci.yml` n'a besoin d'aucun secret.
+- Le token de déploiement (<code v-pre>${{ secrets.DEPLOY_TOKEN }}</code>) n'apparaît qu'au workflow `deploy.yml` des modules 06-07 — `ci.yml` n'a besoin d'aucun secret.
 
 **Commit cible :**
 ```

@@ -198,11 +198,11 @@ steps:
 ```
 
 Points essentiels :
-- On lit un secret via l'expression `secrets.NOM` entre les délimiteurs `${{ }}`.
+- On lit un secret via l'expression `secrets.NOM` entre les délimiteurs <code v-pre>${{ }}</code>.
 - GitHub **masque automatiquement** la valeur dans les logs (elle apparaît comme `***`).
 - Un secret n'est **pas** exposé aux workflows déclenchés par une PR venant d'un fork — protection anti-vol. La gestion fine des secrets (environnements, OIDC sans secret long terme) est au module 08.
 
-> Les délimiteurs `${{ ... }}` encadrent une **expression** GitHub Actions (secrets, contexts, conditions). Retiens la forme ici ; les contexts complets sont détaillés au module 02.
+> Les délimiteurs <code v-pre>${{ ... }}</code> encadrent une **expression** GitHub Actions (secrets, contexts, conditions). Retiens la forme ici ; les contexts complets sont détaillés au module 02.
 
 ---
 
@@ -386,7 +386,7 @@ Ce module pose les fondations. Les modules suivants enrichissent **ce même fich
 6. `actions/checkout` est presque toujours le premier step — sinon le runner n'a pas ton code.
 7. En CI, on installe avec `npm ci` (reproductible), pas `npm install`.
 8. `env:` définit des variables d'env aux portées workflow / job / step (la plus fine gagne).
-9. Un secret se lit via `secrets.NOM` entre `${{ }}` ; il est masqué dans les logs et jamais écrit en clair dans le fichier.
+9. Un secret se lit via `secrets.NOM` entre <code v-pre>${{ }}</code> ; il est masqué dans les logs et jamais écrit en clair dans le fichier.
 10. On épingle une action à une version majeure (`@v7`) au minimum, jamais à une branche mouvante.
 
 ---

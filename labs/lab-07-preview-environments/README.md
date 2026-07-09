@@ -32,7 +32,7 @@ Le `<slug>` est de la forme `pr-42`. À toi d'écrire **les workflows** qui les 
 3. **Bonus** — `preview-reaper.yml` : un cron nocturne qui détruit les previews des PR déjà fermées (filet de sécurité contre les teardown ratés).
 
 **Contraintes :**
-- Tout `${{ ... }}` reste dans le YAML (jamais en prose) ; aucun vrai secret.
+- Tout <code v-pre>${{ ... }}</code> reste dans le YAML (jamais en prose) ; aucun vrai secret.
 - Le teardown doit se déclencher sur `closed` **sans** filtrer par `merged` (on détruit dans les deux cas).
 - Pas de gap-fill : tu écris les fichiers complets à partir du squelette ci-dessous.
 

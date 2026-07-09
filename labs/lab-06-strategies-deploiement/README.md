@@ -12,7 +12,7 @@ Le job `deploy` de TribuZen est aujourd'hui un **recreate** qui coupe le service
 
 Cahier des charges **exact** :
 
-1. **Canary à 3 paliers** — `5 %` → `25 %` → `100 %` de trafic sur la nouvelle image (`${{ github.sha }}`).
+1. **Canary à 3 paliers** — `5 %` → `25 %` → `100 %` de trafic sur la nouvelle image (<code v-pre>${{ github.sha }}</code>).
 2. **Porte de décision** entre chaque palier : un step qui échoue si les métriques dérivent (`analyze.sh --window=10m --max-error-rate=1% --max-p95=400ms`). Un échec doit **empêcher** la promotion au palier suivant.
 3. **Rollback automatique** : si **n'importe quel** step précédent échoue, un dernier step ramène le trafic à `100 %` stable (`canary.sh set 0 <sha>`).
 4. **Garde de branche + environnement** : ne déployer que sur `main`, derrière un `environment: production` (approbation).

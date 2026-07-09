@@ -349,7 +349,7 @@ Le défaut read-only ne vaut que pour les **orgs créées après février 2023**
 
 ### PIÈGE #4 — Interpoler une donnée externe directement dans un `run:`
 
-`${{ github.event.pull_request.title }}` (ou `head_ref`, etc.) collé dans un `run:` est **exécuté par le shell**. Un titre de PR malveillant devient une commande. Correct : passer la valeur par une variable d'**environnement** (`env:`), que le shell ne réévalue pas. C'est du script injection, l'équivalent CI d'une injection SQL.
+<code v-pre>${{ github.event.pull_request.title }}</code> (ou `head_ref`, etc.) collé dans un `run:` est **exécuté par le shell**. Un titre de PR malveillant devient une commande. Correct : passer la valeur par une variable d'**environnement** (`env:`), que le shell ne réévalue pas. C'est du script injection, l'équivalent CI d'une injection SQL.
 
 ### PIÈGE #5 — Confondre least privilege au niveau workflow et au niveau job
 

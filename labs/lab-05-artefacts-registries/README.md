@@ -49,9 +49,9 @@ jobs:
 
 1. **Déclencheurs** — bloc `on:` avec `push.tags: ['v*']` et `push.branches: [main]`.
 2. **Permissions** — au niveau du job : `contents: read` + `packages: write`, rien d'autre.
-3. **Login** — `docker/login-action@v4` sur `registry: ghcr.io`, `username: github.actor`, `password: secrets.GITHUB_TOKEN` (dans un bloc code YAML, avec la syntaxe `${{ … }}`).
+3. **Login** — `docker/login-action@v4` sur `registry: ghcr.io`, `username: github.actor`, `password: secrets.GITHUB_TOKEN` (dans un bloc code YAML, avec la syntaxe <code v-pre>${{ … }}</code>).
 4. **Métadonnées** — `docker/metadata-action@v6` avec `id: meta`, `images:` pointant sur `ghcr.io/<owner>/tribuzen-api`, et les 4 lignes `tags:` (2× semver, sha, raw latest conditionné à la branche par défaut).
-5. **Build & push** — `docker/build-push-action@v7` avec `push: true`, `tags: ${{ steps.meta.outputs.tags }}`, `labels: ${{ steps.meta.outputs.labels }}`.
+5. **Build & push** — `docker/build-push-action@v7` avec `push: true`, <code v-pre>tags: ${{ steps.meta.outputs.tags }}</code>, <code v-pre>labels: ${{ steps.meta.outputs.labels }}</code>.
 6. **Vérifier** — pousse un tag `v0.1.0`, puis dans Packages contrôle que `0.1.0`, `0.1`, `sha-…` et `latest` existent bien.
 7. **Cas limite** — merge sur `main` **sans** tag : vérifie que seuls `sha-…` et `latest` apparaissent (aucun tag semver parasite).
 
@@ -115,7 +115,7 @@ jobs:
 
 **Pourquoi ce corrigé est correct :**
 - Le bloc `permissions` est au niveau **job** et minimal : une action compromise ne peut pas faire plus qu'écrire un package. C'est le principe de moindre privilège du §2.6 du module.
-- `enable={{is_default_branch}}` sur `latest` empêche qu'une branche de feature repousse `latest` — seul `main` le déplace.
+- <code v-pre>enable={{is_default_branch}}</code> sur `latest` empêche qu'une branche de feature repousse `latest` — seul `main` le déplace.
 - Sur un push `main` sans tag Git, les patterns `type=semver` ne matchent rien : aucun tag semver n'est produit, seulement `sha-…` et `latest`. Le cas limite de l'étape 7 est géré **par la config**, pas par un `if`.
 - On ne liste jamais les tags à la main : `steps.meta.outputs.tags` est la source unique, donc build et push restent cohérents.
 - Le label `org.opencontainers.image.source` (fourni par metadata-action) relie l'image au repo dans l'onglet Packages — traçabilité gratuite.
@@ -144,7 +144,7 @@ jobs:
 
 **Même workflow, contraintes ajoutées, sans rouvrir ce corrigé ni le module :**
 
-1. Ajoute un **tag `sha`** signé : après le push, une étape `sigstore/cosign-installer@v4` puis `cosign sign --yes ghcr.io/<owner>/tribuzen-api@${{ steps.build.outputs.digest }}` (keyless via l'OIDC — pense à ajouter `id-token: write` aux permissions).
+1. Ajoute un **tag `sha`** signé : après le push, une étape `sigstore/cosign-installer@v4` puis <code v-pre>cosign sign --yes ghcr.io/&lt;owner&gt;/tribuzen-api@${{ steps.build.outputs.digest }}</code> (keyless via l'OIDC — pense à ajouter `id-token: write` aux permissions).
 2. Active les attestations : `sbom: true` et `provenance: mode=max` sur `build-push-action`.
 3. Fais tout ça **en 25 minutes**, de mémoire.
 

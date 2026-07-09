@@ -68,12 +68,12 @@ jobs:
 
 ## Étapes (en friction)
 
-1. **Matrix d'abord** — ajoute `strategy.matrix.node: [20, 22]` au job `quality`, branche `node-version: ${{ matrix.node }}`, ajoute `fail-fast: false`. Push. Vérifie dans Actions que **2 jobs** apparaissent (`quality (20)`, `quality (22)`).
+1. **Matrix d'abord** — ajoute `strategy.matrix.node: [20, 22]` au job `quality`, branche <code v-pre>node-version: ${{ matrix.node }}</code>, ajoute `fail-fast: false`. Push. Vérifie dans Actions que **2 jobs** apparaissent (`quality (20)`, `quality (22)`).
 2. **Cache** — ajoute `cache: 'npm'` sur `setup-node`. Push **deux fois** (change un espace pour re-trigger). Ouvre les logs du step `setup-node` du 2ᵉ run : tu dois voir une ligne de restauration de cache.
 3. **Sépare le build** — crée un job `build` avec `needs: quality`, qui refait checkout + install + `npm run build`, puis `actions/upload-artifact@v7` (`name: dist`, `path: dist/`, `retention-days: 5`). Push. Dans le run, l'artefact `dist` doit être **téléchargeable** (encart Artifacts en bas du run).
 4. **Extrais le reusable workflow** — crée `.github/workflows/reusable-test.yml` avec `on.workflow_call` + input `node-version` (type string) ; déplaces-y le job de test. Dans `ci.yml`, remplace le job `quality` par un job qui appelle ce workflow via `uses: ./.github/workflows/reusable-test.yml` **dans une matrix** `node: [20, 22]`, en passant `with.node-version`.
 5. **Vérifie le tout** — dernier push : Actions doit montrer les appels matriciels du reusable workflow, puis `build`, puis l'artefact `dist`. Les runs obsolètes (si tu ajoutes la concurrency bonus) s'annulent.
-6. **Bonus** — ajoute au niveau workflow une `concurrency` `group: ${{ github.workflow }}-${{ github.ref }}` avec `cancel-in-progress: true`, puis pousse 2 commits coup sur coup : le premier run doit passer en **Cancelled**.
+6. **Bonus** — ajoute au niveau workflow une `concurrency` <code v-pre>group: ${{ github.workflow }}-${{ github.ref }}</code> avec `cancel-in-progress: true`, puis pousse 2 commits coup sur coup : le premier run doit passer en **Cancelled**.
 
 ---
 
@@ -154,7 +154,7 @@ jobs:
 - Le job `test` de `ci.yml` **n'a pas de `steps`** : quand un job utilise `uses:`, il délègue entièrement au workflow appelé. La matrix génère **2 appels** (`test (20)`, `test (22)`), chacun exécutant le reusable workflow avec son `node-version`.
 - Les valeurs de la matrix sont des **strings** (`'20'`) car l'input `node-version` est déclaré `type: string` côté reusable — passer un nombre marcherait par coercition, mais aligner les types évite les surprises.
 - `cache: 'npm'` sur `setup-node` couvre le cas standard sans avoir à écrire un bloc `actions/cache@v6` manuel : au 2ᵉ run avec le même `package-lock.json`, le cache est restauré.
-- L'artefact `dist` est **immuable en v4** : ici pas de risque de collision car un seul job `build`. Si tu avais uploadé depuis la matrix, il aurait fallu `name: dist-node${{ matrix.node }}`.
+- L'artefact `dist` est **immuable en v4** : ici pas de risque de collision car un seul job `build`. Si tu avais uploadé depuis la matrix, il aurait fallu <code v-pre>name: dist-node${{ matrix.node }}</code>.
 - `needs: test` fait attendre le build que **tous** les appels matriciels réussissent — un échec sur Node 20 bloque le build.
 - La `concurrency` bonus utilise `github.workflow` + `github.ref` : deux pushes rapides sur la même branche → le premier run bascule en **Cancelled**.
 

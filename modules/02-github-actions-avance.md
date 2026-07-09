@@ -84,7 +84,7 @@ jobs:
       - run: npm test
 ```
 
-Les valeurs d'un axe se lisent dans le **contexte `matrix`** (`${{ matrix.node }}`), utilisable partout dans le job.
+Les valeurs d'un axe se lisent dans le **contexte `matrix`** (<code v-pre>${{ matrix.node }}</code>), utilisable partout dans le job.
 
 **`include`** ajoute ou enrichit des combinaisons ; **`exclude`** en retire :
 
@@ -300,7 +300,7 @@ Heuristique : **quelques steps répétés dans un job → composite** ; **un pip
 
 ### 2.5 Contexts et expressions
 
-Une **expression** vit entre `${{ }}` et lit des **contexts** (objets fournis par GitHub). Les plus courants :
+Une **expression** vit entre <code v-pre>${{ }}</code> et lit des **contexts** (objets fournis par GitHub). Les plus courants :
 
 | Context | Contient | Exemple |
 |---|---|---|
@@ -322,7 +322,7 @@ Fonctions utiles dans les expressions : `hashFiles('**/package-lock.json')`, `co
     echo "os=${{ runner.os }}"
 ```
 
-> **⚠️ Un `${{ }}` en pleine prose casse le rendu du site.** Dans ce module, il n'apparaît **que** dans des blocs de code. En dehors, on écrit « le contexte `github.ref` » sans les délimiteurs.
+> **⚠️ Un <code v-pre>${{ }}</code> en pleine prose casse le rendu du site.** Dans ce module, il n'apparaît **que** dans des blocs de code. En dehors, on écrit « le contexte `github.ref` » sans les délimiteurs.
 
 ### 2.6 Concurrency — annuler les runs obsolètes
 
@@ -342,7 +342,7 @@ Se déclare au **niveau workflow** (tout le run) ou au **niveau job** (`jobs.<id
 
 ### 2.7 Conditions `if` et exécution conditionnelle
 
-`if` s'applique à un **job** ou à un **step**. Sans `${{ }}` obligatoires (GitHub les infère dans un `if`), mais on les met pour les expressions complexes.
+`if` s'applique à un **job** ou à un **step**. Sans <code v-pre>${{ }}</code> obligatoires (GitHub les infère dans un `if`), mais on les met pour les expressions complexes.
 
 ```yaml
 jobs:
@@ -573,7 +573,7 @@ tribuzen/
 2. `actions/cache@v6` accélère via `key` (identité exacte, souvent `hashFiles(lockfile)`) + `restore-keys` (replis) ; `setup-node` avec `cache: 'npm'` suffit pour le cas npm standard.
 3. Chaque job a un disque neuf : transporter des fichiers = `upload-artifact@v4` / `download-artifact@v4`. En v4 les artefacts sont **immuables** → nom unique par combinaison matrix.
 4. Composite action = steps réutilisés dans un job (`uses:` d'un step, `shell:` requis) ; reusable workflow = jobs réutilisés entre workflows (`uses:` d'un job, `workflow_call`).
-5. Les expressions `${{ }}` lisent des contexts (`github`, `matrix`, `needs`, `steps`, `runner`, `secrets`) ; hors bloc de code, ne jamais écrire les délimiteurs.
+5. Les expressions <code v-pre>${{ }}</code> lisent des contexts (`github`, `matrix`, `needs`, `steps`, `runner`, `secrets`) ; hors bloc de code, ne jamais écrire les délimiteurs.
 6. `concurrency` + `cancel-in-progress: true` annule les runs obsolètes d'une même branche ; à laisser `false` pour un déploiement.
 7. `if` garde un job/step ; `needs.<job>.result` + `github.ref` protègent un déploiement ; `always()`/`failure()` gèrent les cas d'échec.
 8. Un `environment` porte secrets dédiés + approvals : le job se met en pause jusqu'à validation humaine (point de contrôle du Continuous Delivery).

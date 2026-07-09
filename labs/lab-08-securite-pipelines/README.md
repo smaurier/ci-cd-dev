@@ -3,7 +3,7 @@
 > **Outcome :** à la fin, tu sais **auditer** un workflow de déploiement vulnérable et le **durcir** — OIDC à la place des clés long terme, `GITHUB_TOKEN` au minimum, actions épinglées au SHA, scanning branché — sur un vrai dépôt GitHub.
 > **Vrai outil :** GitHub Actions (workflows dans `.github/workflows/`), sur un dépôt GitHub réel — l'onglet Actions et l'onglet Security montrent le résultat en direct.
 > **Feedback :** le coach valide en session — pas de test-runner auto-correcteur.
-> **⚠️ Aucun vrai secret.** On n'écrit **que** des `${{ secrets.NOM }}` et des placeholders `<...>`. Aucune vraie clé ne doit apparaître (la push protection GitHub bloquerait `AKIA...` / `sk_live_...`).
+> **⚠️ Aucun vrai secret.** On n'écrit **que** des <code v-pre>${{ secrets.NOM }}</code> et des placeholders `<...>`. Aucune vraie clé ne doit apparaître (la push protection GitHub bloquerait `AKIA...` / `sk_live_...`).
 
 ---
 
@@ -189,7 +189,7 @@ updates:
 Reprends un `deploy.yml` vulnérable **de mémoire, en 25 minutes**, avec ces ajouts :
 
 1. Ajoute un **job `staging`** qui déploie sur l'environment `staging` depuis toute PR, et le job `production` **seulement** sur `main` (garde `if: github.ref == 'refs/heads/main'`). Chaque environment a **son propre** rôle OIDC (`role-to-assume` différent).
-2. Le `role-session-name` doit inclure le numéro de run (`${{ github.run_id }}`) pour tracer chaque déploiement dans CloudTrail.
+2. Le `role-session-name` doit inclure le numéro de run (<code v-pre>${{ github.run_id }}</code>) pour tracer chaque déploiement dans CloudTrail.
 3. **Sans rouvrir ce corrigé** ni le module 08.
 
 **Critère de réussite :** aucun secret cloud stocké, `id-token: write` présent **uniquement** dans les jobs de déploiement, toutes les actions épinglées au SHA, et le déploiement production impossible depuis une PR.

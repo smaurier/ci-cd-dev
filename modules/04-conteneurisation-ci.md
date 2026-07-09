@@ -351,9 +351,9 @@ Le multi-stage ne réduit rien si le stage final **repart d'une base lourde** ou
 
 Chaque job CI part d'une machine neuve : **aucun** cache Docker local n'est conservé. Sans `cache-from/cache-to type=gha` (ou un autre backend de cache), Buildx reconstruit tout à chaque fois. Le cache ne « marche » en CI que si on l'exporte/importe explicitement.
 
-### PIÈGE #6 — `${{ }}` en prose casse le rendu
+### PIÈGE #6 — <code v-pre>${{ }}</code> en prose casse le rendu
 
-Les expressions GitHub Actions comme `${{ github.sha }}` doivent **toujours** rester dans un bloc de code, jamais en texte courant. En prose, parle de « l'expression `github.sha` » sans les délimiteurs.
+Les expressions GitHub Actions comme <code v-pre>${{ github.sha }}</code> doivent **toujours** rester dans un bloc de code, jamais en texte courant. En prose, parle de « l'expression `github.sha` » sans les délimiteurs.
 
 ### PIÈGE #7 — Vouloir débugger une image distroless avec un shell
 
